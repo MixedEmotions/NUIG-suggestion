@@ -26,19 +26,12 @@ from keras import backend as K
 
 # set parameters:
 testPath = "/Users/sapna/PycharmProjects/MEsentiment/data/suggestion/tweets_microsoft.csv"
+#savedModelPath = http://server1.nlp.insight-centre.org/MEsavedModels/CNN_twitterSugg_model.h5
 Embedding_dir = "/Users/sapna/PycharmProjects/Keyphrase-Extractor/Glove/glove.twitter.27B.50d.txt"
 savedModelPath = "/Users/sapna/PycharmProjects/MEsentiment/savedModels/CNN_twitterSugg_model.h5"
 max_no_words = 27000000000 #fixed, should be same as the number of words in embeddings
 maxlen= 40
-
-def read_csv(inputFilePath):
-    fileReader = open(inputFilePath, "r+", encoding="utf-8", errors="ignore")
-    tweets_list = []
-
-    for row in csv.reader(fileReader):
-        list_element = [row[2], row[1]]
-        tweets_list.append(list_element)
-    return tweets_list
+text_instance = "some tweet"
 
 
 # start process_tweet
@@ -100,19 +93,6 @@ def pretrainedEmbeddings():
 
 if __name__ == "__main__":
 
-    dataTest = read_csv(testPath)
-
-    print("tweets cleaned!")
-
-    print("indexing text and labels")
-    tweettest = []
-    classlabelstest = []
-
-    for j in dataTest:
-        classlabelstest.append(int(j[0]))
-        tweettest.append(j[1])
-
-
     classifierModel = load_model(savedModelPath)
 
     embedding_index = pretrainedEmbeddings()
@@ -125,17 +105,20 @@ if __name__ == "__main__":
 
     vectorizer = CountVectorizer(max_features=max_no_words,stop_words=None, binary=True)
     vectorizer.fit(vectorizerTrainDocList) #vectorizer train docs are all the words in the pretrained embedding
-    sparse_test = vectorizer.transform(tweettest)
-
+    sparse_test = vectorizer.transform([text_instance])
 
     Xj = [row.indices for row in sparse_test]
 
-    y_test_categories =  np.array(to_categorical(classlabelstest, 2))
-    X_test, y_test = np.array(Xj), y_test_categories
+    X_test = np.array(Xj)
 
     X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
-    print('X_test shape:', X_test.shape)
-    print(len(X_test), 'test sequences')
+    #print('X_test shape:', X_test.shape)
+    #print(len(X_test), 'test sequences')
 
     y_test_predict = classifierModel.predict_classes(X_test)
-    print(f1_score(y_test_categories, to_categorical(np.array(y_test_predict),2), average=None))
+
+    if(y_test_predict==1):
+            print("positive")
+    else:
+            print("negative")
+
