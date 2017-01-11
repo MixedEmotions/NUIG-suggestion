@@ -1,1 +1,9 @@
+Download the pretrained embeddings from:
+http://server1.nlp.insight-centre.org/MEsavedModels/CNN_twitterSugg_model.h5
 
+
+Download the saved model from:
+http://nlp.stanford.edu/projects/glove/ by clicking on "glove.twitter.27B.zip"
+
+
+change the paths accordingly in the source code(cnnTweetSuggestionPredictSentence)
