@@ -1,10 +1,6 @@
-'''This example demonstrates the use of Convolution1D for text classification.
-Gets to 0.88 test accuracy after 2 epochs.
-90s/epoch on Intel i5 2.4Ghz CPU.
-10s/epoch on Tesla K40 GPU.
-'''
-
 from __future__ import print_function
+from flask import Flask, jsonify, request
+import operator
 import numpy as np
 import sys
 
@@ -23,6 +19,8 @@ from keras.preprocessing.text import Tokenizer
 from keras.models import Sequential
 from keras.layers import Embedding
 from keras import backend as K
+app = Flask(__name__)
+
 
 # set parameters:
 testPath = "/Users/sapna/PycharmProjects/MEsentiment/data/suggestion/tweets_microsoft.csv"
@@ -30,6 +28,16 @@ testPath = "/Users/sapna/PycharmProjects/MEsentiment/data/suggestion/tweets_micr
 Embedding_dir = "/Users/sapna/PycharmProjects/Keyphrase-Extractor/Glove/glove.twitter.27B.50d.txt"
 savedModelPath = "/Users/sapna/PycharmProjects/MEsentiment/savedModels/CNN_twitterSugg_model.h5"
 max_no_words = 27000000000 #fixed, should be same as the number of words in embeddings
+maxlen= 40
+text_instance = "some tweet"
+
+
+# set parameters:
+testPath = "/Users/sapna/PycharmProjects/MEsentiment/data/suggestion/tweets_microsoft.csv"
+#savedModelPath = http://server1.nlp.insight-centre.org/MEsavedModels/CNN_twitterSugg_model.h5
+Embedding_dir = "/Users/sapna/PycharmProjects/Keyphrase-Extractor/Glove/glove.twitter.27B.50d.txt"
+savedModelPath = "/Users/sapna/PycharmProjects/MEsentiment/savedModels/CNN_twitterSugg_model.h5"
+max_no_words = 27000000000 #fixed, should be same as the number of words in the pretrained embeddings
 maxlen= 40
 text_instance = "some tweet"
 
@@ -91,8 +99,7 @@ def pretrainedEmbeddings():
     f.close()
     return embedding_index
 
-if __name__ == "__main__":
-
+def classify(text):
     classifierModel = load_model(savedModelPath)
 
     embedding_index = pretrainedEmbeddings()
@@ -105,7 +112,7 @@ if __name__ == "__main__":
 
     vectorizer = CountVectorizer(max_features=max_no_words,stop_words=None, binary=True)
     vectorizer.fit(vectorizerTrainDocList) #vectorizer train docs are all the words in the pretrained embedding
-    sparse_test = vectorizer.transform([text_instance])
+    sparse_test = vectorizer.transform([text])
 
     Xj = [row.indices for row in sparse_test]
 
@@ -121,3 +128,34 @@ if __name__ == "__main__":
             print("positive")
     else:
             print("negative")
+
+def split_sentences(text):
+    """
+    Utility function to return a list of sentences.
+    @param text The text that must be split in to sentences.
+    """
+    sentence_delimiters = re.compile(u'[.!?,;:\t\\\\"\\(\\)\\\'\u2019\u2013]|\\s\\-\\s')
+    sentences = sentence_delimiters.split(text)
+    return sentences
+
+
+
+def run(text):
+    sentence_list = split_sentences(cleanTweet(text))
+    label = "non-suggestion"
+    for sentence in sentence_list:
+        label_temp = classify(sentence)
+        if label_temp=="suggestion":
+            label = "suggestion"
+
+    return label
+
+
+@app.route('/<inputSentence>', methods = ['GET'])
+def test(inputSentence):
+    text = inputSentence
+    sentenceList = split_sentences(text)
+    return run(text)
+
+if __name__ == '__main__':
+    app.run(debug = True)
