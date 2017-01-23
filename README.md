@@ -18,8 +18,6 @@ Provided processors are basically wrappers around varius sentiment analysis impl
 
 ## CREDITS (citations if available)
 
-essing Toolkit In Proceedings of the 52nd Annual Meeting of the Association for Computational Linguistics: System Demonstrations, pp. 55-60.
-
 NLTK [site](http://www.nltk.org/)
 
 
