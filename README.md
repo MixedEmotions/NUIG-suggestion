@@ -16,7 +16,7 @@ The service should return 'suggestion' or 'non-suggestion'
 
 ## CREDITS (citations if available)
 
-KERAS [site](https://keras.io)
+The neural network based classifier has been implemented using the deep learning library KERAS [site](https://keras.io).
 
 
 ## ACKNOWLEDGEMENT
