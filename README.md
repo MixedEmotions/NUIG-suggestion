@@ -3,7 +3,7 @@ Predicts whether a given text contains a suggestion or not. Given text can be a 
 
 ## REQUIREMENTS
 
-This package requires python3.5, maven for instalation and wget for downloading Sentiment140 dataset.
+This package requires python3.5, rest of the requirements are listed in the requirement file.
 
 ## INSTALLATION
 
