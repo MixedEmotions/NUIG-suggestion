@@ -7,7 +7,8 @@ This package requires python3.5, rest of the requirements are listed in the requ
 
 ## INSTALLATION
 
-Run suggestionAPI.py
+Run: 
+suggestionAPI.py
 
 ## USAGE
 
