@@ -7,19 +7,16 @@ This package requires python3.5, rest of the requirements are listed in the requ
 
 ## INSTALLATION
 
-1. 
+Run suggestionAPI.py
 
 ## USAGE
 
-
-## PROCESSORS
-
-Provided processors are basically wrappers around varius sentiment analysis implementations.
+Type http://0.0.0.0:5000/text in your browser, where text can be a sentence or a tweet. 
+The service should return 'suggestion' or 'non-suggestion'
 
 ## CREDITS (citations if available)
 
-NLTK [site](http://www.nltk.org/)
-
+KERAS [site](https://keras.io)
 
 
 ## ACKNOWLEDGEMENT
