@@ -12,7 +12,9 @@ suggestionAPI.py
 
 ## USAGE
 
-Type http://0.0.0.0:5000/text in your browser, where text can be a sentence or a tweet. 
+Type  http://0.0.0.0:5000/text=give your sentence here 
+
+in your browser, where text can be a sentence or a tweet. 
 The service should return 'suggestion' or 'non-suggestion'
 
 ## CREDITS (citations if available)
