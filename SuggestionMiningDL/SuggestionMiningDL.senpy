@@ -1,0 +1,20 @@
+{
+    "name": "SuggestionMiningDL",
+    "module": "SuggestionMiningDL",
+    "description": "Suggestion Mining using LSTM",
+    "author": "@sapneg @vlaand",
+    "version": "0.1",
+    "async": False,
+     
+    "requirements": [
+        "nltk==3.1",
+        "numpy==1.10.4",
+        "scipy==0.18.1",
+        "scikit-learn==0.17.1",
+        "flask",
+        "h5py",
+        "theano",
+        "senpy",
+        "keras==1.1.0"
+        ]
+}
