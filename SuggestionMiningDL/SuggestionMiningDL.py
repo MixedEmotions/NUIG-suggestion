@@ -1,7 +1,11 @@
-# -*- coding: utf-8 -*-
+
+# coding: utf-8
+
+# In[ ]:
+
+
 
 from __future__ import division, print_function
-#from flask import Flask, jsonify, request
 import logging
 import numpy as np
 import os, codecs, csv, re, nltk
@@ -24,6 +28,8 @@ from keras.models import load_model
 from datetime import datetime 
 
 
+# In[ ]:
+
 class SuggestionMiningDL(SentimentPlugin):
     
     def __init__(self, info, *args, **kwargs):
@@ -40,6 +46,7 @@ class SuggestionMiningDL(SentimentPlugin):
         self.max_no_words = 300000 #fixed, should be same as the number of words in embeddings
         self.maxlen = 40
         
+               
         
 
     def activate(self, *args, **kwargs):
@@ -47,11 +54,11 @@ class SuggestionMiningDL(SentimentPlugin):
         np.random.seed(1337)  # for reproducibility
         
         st = datetime.now()
-        #self._classifierModel = load_model(self.savedModelPath)       
+        self._classifierModel = load_model(self.savedModelPath)       
         logger.info("{} {}".format(datetime.now() - st, "loaded _classifierModel"))
         
         st = datetime.now()
-        #self._tokenizer = self.get_tokenizer()
+        self._tokenizer = self.get_tokenizer()
         logger.info("{} {}".format(datetime.now() - st, "loaded _tokenizer"))
         
         #st = datetime.now()
@@ -98,9 +105,9 @@ class SuggestionMiningDL(SentimentPlugin):
         tweet = re.sub('!', '', tweet)
         tweet = re.sub(':', '', tweet)
         tweet = re.sub('^-?[0-9]+$', '', tweet)
-        tweet = tweet.strip('\'"')
-        return tweet
-        # end 
+        tweet = tweet.strip('\'"').replace('.','').strip()
+        return tweet        
+    
 
     def pretrainedEmbeddings(self, EmbeddingPath):
         embedding_index = {}
@@ -130,7 +137,7 @@ class SuggestionMiningDL(SentimentPlugin):
 
     def convert_text_to_vector(self, text, tokenizer):
         st = datetime.now()
-        test_sequences = self._tokenizer.texts_to_sequences([text])
+        test_sequences = self._tokenizer.texts_to_sequences(text)
         logger.info("{} {}".format(datetime.now() - st, "test_sequences"))
         
         st = datetime.now()
@@ -140,20 +147,12 @@ class SuggestionMiningDL(SentimentPlugin):
     
     def classify(self, X_test):    
         st = datetime.now()
-        print(self._classifierModel)
-        y_test_predict = self._classifierModel.predict_classes(X_test)     
-        
-        # EXCEPTION ('The following error happened while compiling the node', InplaceDimShuffle{x,0}(dense_2_b), '\\n', 'child watchers are only available on the default loop', '[InplaceDimShuffle{x,0}(dense_2_b)]')
-        
+        y_test_predict = self._classifierModel.predict_classes(X_test)
         logger.info("{} {}".format(datetime.now() - st, "y_test_predict"))
+        
         print(y_test_predict)
-
-        if(y_test_predict==[0]):
-            return "non-suggestion"
-        else:
-            return "suggestion"
-
-    def split_sentences(self, text):
+        return y_test_predict
+    
         """
         Utility function to return a list of sentences.
         @param text The text that must be split in to sentences.
@@ -168,59 +167,124 @@ class SuggestionMiningDL(SentimentPlugin):
         text_input = params.get("input", None)
 
         st = datetime.now()
-        text_input = self.cleanTweet(text_input)
-        logger.info("{} {}".format(datetime.now() - st, "tweets cleaned"))
+        text_sentences = self.cleanTweet(text_input) #[self.cleanTweet(sentence) for sentence in self.split_into_sentences(text_input)] 
+        logger.info("{} {}".format(datetime.now() - st, "tweets splitted and cleaned"))
         
-        #X_test = self.convert_text_to_vector(text_input, self._tokenizer)
-
-        #label = self.classify(X_test)
-        label = "non-suggestion"
-        print(label)        
+        print(text_sentences)
+        #X_test = [ self.convert_text_to_vector(sentence, self._tokenizer) for sentence in text_sentences]
+        X_test = self.convert_text_to_vector([text_sentences], self._tokenizer)
         
-
+        y_pred = self.classify(X_test)
+        print(y_pred)
         # RESPONSE
 
         response = Results()
         
         entry = Entry()
         entry.nif__isString = text_input
+           
+        _mapping_labels = {0:False, 1:True}
         
-        #suggestionSet = SuggestionSet()
-        #suggestionSet.id = "Suggestions"
+        for sentence, y_i in zip([text_sentences], y_pred):
+            suggestion = Suggestion()            
+            suggestion['hasSuggestion'] = _mapping_labels[y_i]
+            suggestion["nif:beginIndex"] = 0
+            suggestion["nif:endIndex"] = len(sentence)
+            suggestion["nif:anchorOf"] = sentence
+            entry.suggestions.append(suggestion)
         
-        
-        #suggestion1 = Suggestion()
-        #suggestionSet.onyx__hasSuggestion.append(label)
-        
-        suggestion = Suggestion()
-        
-        if label == 'suggestion':
-            suggestion['hasSuggestion'] = 'True'
-        else:
-            suggestion['hasSuggestion'] = 'False'
-        entry.suggestions.append(suggestion)
-        
-        """
-        for dimension in ['V','A','D']:
-            weights = [feature_text[i] for i in feature_text if (i != 'surprise')]
-            if not all(v == 0 for v in weights):
-                value = np.average([self.centroids[i][dimension] for i in feature_text if (i != 'surprise')], weights=weights) 
-            else:
-                value = 5.0
-            suggestion1[self._centroid_mappings[dimension]] = value         
-
-        suggestionSet.onyx__hasSuggestion.append(suggestion1)    
-        
-        for i in feature_text:
-            if(self.ESTIMATOR == 'SVC'):
-                suggestionSet.onyx__hasSuggestion.append(Suggestion(onyx__hasSuggestionCategory=self._wnaffect_mappings[i],
-                                    onyx__hasEmotionIntensity=feature_text[i]))
-            else:
-                if(feature_text[i] > 0):
-                    suggestionSet.onyx__hasEmotion.append(Emotion(onyx__hasEmotionCategory=self._wnaffect_mappings[i]))
-        """
-        #entry.suggestion = [suggestionSet,]
         
         response.entries.append(entry)
             
         return response
+
+
+# In[86]:
+
+"""
+import re
+
+def cleanTweet(tweet):
+        tweet = tweet.lower()
+        tweet = " " + tweet
+        tweet = re.sub(r'[^\x00-\x7F]+', '', tweet)
+        tweet = re.sub(' rt ', '', tweet)
+        tweet = re.sub('(\.)+', '.', tweet)
+        # tweet = re.sub('((www\.[^\s]+)|(https://[^\s]+) | (http://[^\s]+))','URL',tweet)
+        tweet = re.sub('((www\.[^\s]+))', '', tweet)
+        tweet = re.sub('((http://[^\s]+))', '', tweet)
+        tweet = re.sub('((https://[^\s]+))', '', tweet)
+        tweet = re.sub('@[^\s]+', '', tweet)
+        tweet = re.sub('[\s]+', ' ', tweet)
+        tweet = re.sub(r'#([^\s]+)', r'\1', tweet)
+        tweet = re.sub('_', '', tweet)
+        tweet = re.sub('\$', '', tweet)
+        tweet = re.sub('%', '', tweet)
+        tweet = re.sub('^', '', tweet)
+        tweet = re.sub('&', '', tweet)
+        tweet = re.sub('\*', '', tweet)
+        tweet = re.sub('\(', '', tweet)
+        tweet = re.sub('\)', '', tweet)
+        tweet = re.sub('-', '', tweet)
+        tweet = re.sub('\+', '', tweet)
+        tweet = re.sub('=', '', tweet)
+        tweet = re.sub('"', '', tweet)
+        tweet = re.sub('~', '', tweet)
+        tweet = re.sub('`', '', tweet)
+        tweet = re.sub('!', '', tweet)
+        tweet = re.sub(':', '', tweet)
+        tweet = re.sub('^-?[0-9]+$', '', tweet)        
+        tweet = tweet.strip('\'"')
+#         tweet = re.sub('.', '', tweet)
+        return tweet.replace('.','').strip()
+    
+def split_into_sentences(text):    
+        text = " " + text + "  "
+        text = text.replace("\n"," ")
+        text = re.sub(_tokenization_regexes['prefixes'],"\\1<prd>",text)
+        text = re.sub(_tokenization_regexes['websites'],"<prd>\\1",text)
+        if "Ph.D" in text: text = text.replace("Ph.D.","Ph<prd>D<prd>")
+        text = re.sub("\s" + _tokenization_regexes['caps'] + "[.] "," \\1<prd> ",text)
+        text = re.sub(_tokenization_regexes['acronyms']+" "+_tokenization_regexes['starters'],"\\1<stop> \\2",text)
+        text = re.sub(_tokenization_regexes['caps'] + "[.]" + _tokenization_regexes['caps'] + "[.]" + _tokenization_regexes['caps'] + "[.]","\\1<prd>\\2<prd>\\3<prd>",text)
+        text = re.sub(_tokenization_regexes['caps'] + "[.]" + _tokenization_regexes['caps'] + "[.]","\\1<prd>\\2<prd>",text)
+        text = re.sub(" "+_tokenization_regexes['suffixes']+"[.] "+_tokenization_regexes['starters']," \\1<stop> \\2",text)
+        text = re.sub(" "+_tokenization_regexes['suffixes']+"[.]"," \\1<prd>",text)
+        text = re.sub(" " + _tokenization_regexes['caps'] + "[.]"," \\1<prd>",text)
+        if "”" in text: text = text.replace(".”","”.")
+        if "\"" in text: text = text.replace(".\"","\".")
+        if "!" in text: text = text.replace("!\"","\"!")
+        if "?" in text: text = text.replace("?\"","\"?")
+        text = text.replace(".",".<stop>")
+        text = text.replace("?","?<stop>")
+        text = text.replace("!","!<stop>")
+        text = text.replace("<prd>",".")
+        sentences = text.split("<stop>")
+        sentences = sentences[:-1]
+        sentences = [s.strip() for s in sentences]
+        
+        return sentences
+
+_tokenization_regexes = {
+            'caps': "([A-Z])",
+            'prefixes': "(Mr|St|Mrs|Ms|Dr)[.]",
+            'suffixes': "(Inc|Ltd|Jr|Sr|Co)",
+            'starters': "(Mr|Mrs|Ms|Dr|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)",
+            'acronyms': "([A-Z][.][A-Z][.](?:[A-Z][.])?)",
+            'websites': "[.](com|net|org|io|gov)"
+        }
+
+text = 'This text makes me sad!\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!'
+print(cleanTweet(text))
+
+cleanTweet(text)
+
+[cleanTweet(t) for t in split_into_sentences(text_input)]
+        
+# for m in re.finditer(' ', text_input):
+#     print(m)
+#     index, item = m.start(), m.group()
+#     print(index, item)
+
+"""
+
