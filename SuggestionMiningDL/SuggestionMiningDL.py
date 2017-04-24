@@ -136,29 +136,29 @@ class SuggestionMiningDL(SentimentPlugin):
 
 
     def convert_text_to_vector(self, text, tokenizer):
-        st = datetime.now()
+        #st = datetime.now()
         test_sequences = self._tokenizer.texts_to_sequences(text)
-        logger.info("{} {}".format(datetime.now() - st, "test_sequences"))
+        #logger.info("{} {}".format(datetime.now() - st, "test_sequences"))
         
-        st = datetime.now()
+        #st = datetime.now()
         X_test = sequence.pad_sequences(test_sequences, maxlen=self.maxlen)
-        logger.info("{} {}".format(datetime.now() - st, "X_test"))
+        #logger.info("{} {}".format(datetime.now() - st, "X_test"))
         return X_test
     
     def classify(self, X_test):    
-        st = datetime.now()
+        #st = datetime.now()
         y_test_predict = self._classifierModel.predict_classes(X_test)
-        logger.info("{} {}".format(datetime.now() - st, "y_test_predict"))
+        #logger.info("{} {}".format(datetime.now() - st, "y_test_predict"))
         
-        print(y_test_predict)
+        #print(y_test_predict)
         return y_test_predict
     
         """
         Utility function to return a list of sentences.
         @param text The text that must be split in to sentences.
         """        
-        sentences = self._tokenizer_nltk.tokenize(text)
-        return sentences
+        #sentences = self._tokenizer_nltk.tokenize(text)
+        #return sentences
 
 
     def analyse(self, **params):
@@ -166,16 +166,16 @@ class SuggestionMiningDL(SentimentPlugin):
 
         text_input = params.get("input", None)
 
-        st = datetime.now()
+        #st = datetime.now()
         text_sentences = self.cleanTweet(text_input) #[self.cleanTweet(sentence) for sentence in self.split_into_sentences(text_input)] 
-        logger.info("{} {}".format(datetime.now() - st, "tweets splitted and cleaned"))
+        #logger.info("{} {}".format(datetime.now() - st, "tweets splitted and cleaned"))
         
-        print(text_sentences)
+        #print(text_sentences)
         #X_test = [ self.convert_text_to_vector(sentence, self._tokenizer) for sentence in text_sentences]
         X_test = self.convert_text_to_vector([text_sentences], self._tokenizer)
         
         y_pred = self.classify(X_test)
-        print(y_pred)
+        #print(y_pred)
         # RESPONSE
 
         response = Results()
@@ -197,94 +197,4 @@ class SuggestionMiningDL(SentimentPlugin):
         response.entries.append(entry)
             
         return response
-
-
-# In[86]:
-
-"""
-import re
-
-def cleanTweet(tweet):
-        tweet = tweet.lower()
-        tweet = " " + tweet
-        tweet = re.sub(r'[^\x00-\x7F]+', '', tweet)
-        tweet = re.sub(' rt ', '', tweet)
-        tweet = re.sub('(\.)+', '.', tweet)
-        # tweet = re.sub('((www\.[^\s]+)|(https://[^\s]+) | (http://[^\s]+))','URL',tweet)
-        tweet = re.sub('((www\.[^\s]+))', '', tweet)
-        tweet = re.sub('((http://[^\s]+))', '', tweet)
-        tweet = re.sub('((https://[^\s]+))', '', tweet)
-        tweet = re.sub('@[^\s]+', '', tweet)
-        tweet = re.sub('[\s]+', ' ', tweet)
-        tweet = re.sub(r'#([^\s]+)', r'\1', tweet)
-        tweet = re.sub('_', '', tweet)
-        tweet = re.sub('\$', '', tweet)
-        tweet = re.sub('%', '', tweet)
-        tweet = re.sub('^', '', tweet)
-        tweet = re.sub('&', '', tweet)
-        tweet = re.sub('\*', '', tweet)
-        tweet = re.sub('\(', '', tweet)
-        tweet = re.sub('\)', '', tweet)
-        tweet = re.sub('-', '', tweet)
-        tweet = re.sub('\+', '', tweet)
-        tweet = re.sub('=', '', tweet)
-        tweet = re.sub('"', '', tweet)
-        tweet = re.sub('~', '', tweet)
-        tweet = re.sub('`', '', tweet)
-        tweet = re.sub('!', '', tweet)
-        tweet = re.sub(':', '', tweet)
-        tweet = re.sub('^-?[0-9]+$', '', tweet)        
-        tweet = tweet.strip('\'"')
-#         tweet = re.sub('.', '', tweet)
-        return tweet.replace('.','').strip()
-    
-def split_into_sentences(text):    
-        text = " " + text + "  "
-        text = text.replace("\n"," ")
-        text = re.sub(_tokenization_regexes['prefixes'],"\\1<prd>",text)
-        text = re.sub(_tokenization_regexes['websites'],"<prd>\\1",text)
-        if "Ph.D" in text: text = text.replace("Ph.D.","Ph<prd>D<prd>")
-        text = re.sub("\s" + _tokenization_regexes['caps'] + "[.] "," \\1<prd> ",text)
-        text = re.sub(_tokenization_regexes['acronyms']+" "+_tokenization_regexes['starters'],"\\1<stop> \\2",text)
-        text = re.sub(_tokenization_regexes['caps'] + "[.]" + _tokenization_regexes['caps'] + "[.]" + _tokenization_regexes['caps'] + "[.]","\\1<prd>\\2<prd>\\3<prd>",text)
-        text = re.sub(_tokenization_regexes['caps'] + "[.]" + _tokenization_regexes['caps'] + "[.]","\\1<prd>\\2<prd>",text)
-        text = re.sub(" "+_tokenization_regexes['suffixes']+"[.] "+_tokenization_regexes['starters']," \\1<stop> \\2",text)
-        text = re.sub(" "+_tokenization_regexes['suffixes']+"[.]"," \\1<prd>",text)
-        text = re.sub(" " + _tokenization_regexes['caps'] + "[.]"," \\1<prd>",text)
-        if "”" in text: text = text.replace(".”","”.")
-        if "\"" in text: text = text.replace(".\"","\".")
-        if "!" in text: text = text.replace("!\"","\"!")
-        if "?" in text: text = text.replace("?\"","\"?")
-        text = text.replace(".",".<stop>")
-        text = text.replace("?","?<stop>")
-        text = text.replace("!","!<stop>")
-        text = text.replace("<prd>",".")
-        sentences = text.split("<stop>")
-        sentences = sentences[:-1]
-        sentences = [s.strip() for s in sentences]
-        
-        return sentences
-
-_tokenization_regexes = {
-            'caps': "([A-Z])",
-            'prefixes': "(Mr|St|Mrs|Ms|Dr)[.]",
-            'suffixes': "(Inc|Ltd|Jr|Sr|Co)",
-            'starters': "(Mr|Mrs|Ms|Dr|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)",
-            'acronyms': "([A-Z][.][A-Z][.](?:[A-Z][.])?)",
-            'websites': "[.](com|net|org|io|gov)"
-        }
-
-text = 'This text makes me sad!\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!'
-print(cleanTweet(text))
-
-cleanTweet(text)
-
-[cleanTweet(t) for t in split_into_sentences(text_input)]
-        
-# for m in re.finditer(' ', text_input):
-#     print(m)
-#     index, item = m.start(), m.group()
-#     print(index, item)
-
-"""
 

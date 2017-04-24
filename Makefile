@@ -1,7 +1,7 @@
 PYVERSION=3.5
-NAME=05_emotion_hashtags_nuig
+NAME=16_suggestion_mining_nuig
 REPO=mixedemotions
-VERSION=0.3.1
+VERSION=1.0.0
 PLUGINS= $(filter %/, $(wildcard */))
 
 

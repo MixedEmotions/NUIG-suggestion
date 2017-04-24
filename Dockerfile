@@ -1,4 +1,4 @@
-from gsiupm/senpy:0.8.5-python3.5
+from gsiupm/senpy:0.8.7-python3.5
 # from nuig/senpy:0.7.0-dev3-python3.5
 
 COPY logo-Insight.png /usr/local/lib/python3.5/site-packages/senpy/static/img/gsi.png
