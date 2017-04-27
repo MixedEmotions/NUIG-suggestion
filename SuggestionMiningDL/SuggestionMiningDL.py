@@ -166,17 +166,14 @@ class SuggestionMiningDL(SentimentPlugin):
 
         text_input = params.get("input", None)
 
-        #st = datetime.now()
+        st = datetime.now()
         text_sentences = self.cleanTweet(text_input) #[self.cleanTweet(sentence) for sentence in self.split_into_sentences(text_input)] 
-        #logger.info("{} {}".format(datetime.now() - st, "tweets splitted and cleaned"))
         
-        #print(text_sentences)
         #X_test = [ self.convert_text_to_vector(sentence, self._tokenizer) for sentence in text_sentences]
         X_test = self.convert_text_to_vector([text_sentences], self._tokenizer)
         
         y_pred = self.classify(X_test)
-        #print(y_pred)
-        # RESPONSE
+        logger.info("{} {}".format(datetime.now() - st, "tweet analysed, predicted: "+str(y_pred)))
 
         response = Results()
         
