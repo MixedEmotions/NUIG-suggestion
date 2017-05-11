@@ -1,7 +1,7 @@
 PYVERSION=3.5
 NAME=16_suggestion_mining_nuig
 REPO=mixedemotions
-VERSION=0.3.2
+VERSION=1.0.1
 PLUGINS= $(filter %/, $(wildcard */))
 
 
